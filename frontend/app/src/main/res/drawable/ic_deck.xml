@@ -1,0 +1,22 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Back Card Outline -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#64748B"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M8,6.5 V4.5 C8,3.67 8.67,3 9.5,3 H19.5 C20.33,3 21,3.67 21,4.5 V14.5 C21,15.33 20.33,16 19.5,16 H17.5" />
+    <!-- Front Card Outline -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#64748B"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M5,7 H14 C14.83,7 15.5,7.67 15.5,8.5 V18.5 C15.5,19.33 14.83,20 14,20 H5 C4.17,20 3.5,19.33 3.5,18.5 V8.5 C3.5,7.67 4.17,7 5,7 Z" />
+</vector>

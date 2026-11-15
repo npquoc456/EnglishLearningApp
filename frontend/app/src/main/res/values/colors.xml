@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Brand colors -->
+    <color name="primary">#9C1C40</color>
+    <color name="primary_dark">#78132F</color>
+    <color name="primary_light">#C23158</color>
+    <color name="primary_container">#FFEBF0</color>
+    <color name="on_primary">#FFFFFF</color>
+
+    <color name="accent_red">#E53935</color>
+    <color name="accent_red_light">#FFEBEE</color>
+
+    <!-- Backgrounds & Surfaces -->
+    <color name="background">#F7F8FA</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="surface_card">#FFFFFF</color>
+    <color name="surface_variant">#F3F4F6</color>
+    <color name="surface_stroke">#E5E7EB</color>
+
+    <!-- Text colors -->
+    <color name="text_primary">#1E1E24</color>
+    <color name="text_secondary">#6B7280</color>
+    <color name="text_muted">#9CA3AF</color>
+    <color name="text_white">#FFFFFF</color>
+
+    <!-- Chips and Badges -->
+    <color name="badge_blue_bg">#EEF2FF</color>
+    <color name="badge_blue_text">#4F46E5</color>
+    <color name="badge_purple_bg">#F5F3FF</color>
+    <color name="badge_purple_text">#7C3AED</color>
+    <color name="badge_pink_bg">#FDF2F8</color>
+    <color name="badge_pink_text">#DB2777</color>
+    <color name="badge_amber_bg">#FEF3C7</color>
+    <color name="badge_amber_text">#D97706</color>
+    <color name="badge_green_bg">#ECFDF5</color>
+    <color name="badge_green_text">#059669</color>
+    <color name="badge_red_bg">#FEE2E2</color>
+    <color name="badge_red_text">#DC2626</color>
+
+    <!-- Heatmap colors -->
+    <color name="heat_none">#E5E7EB</color>
+    <color name="heat_low">#FDE8ED</color>
+    <color name="heat_med">#F7A4B9</color>
+    <color name="heat_high">#E8456D</color>
+    <color name="heat_max">#9C1C40</color>
+
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="transparent">#00000000</color>
+</resources>
