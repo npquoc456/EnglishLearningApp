@@ -4,13 +4,23 @@ plugins {
     alias(libs.plugins.android.application)
 }
 
-// Local-only property for a phone on the same Wi-Fi as the laptop.
-// In frontend/local.properties: phoneApiHost=<laptop LAN IP>
+// Local debug: phoneApiHost=<laptop LAN IP> in frontend/local.properties.
+// Production: publicApiBaseUrl=https://api.your-domain.example/ (HTTPS, trailing slash).
+// Default is the deployed HTTPS endpoint on AWS; override locally for development.
 val localConfig = Properties().apply {
     val propsFile = rootProject.file("local.properties")
     if (propsFile.exists()) propsFile.inputStream().use { load(it) }
 }
-val phoneApiHost = localConfig.getProperty("phoneApiHost", "127.0.0.1")
+val phoneApiHost = localConfig.getProperty("phoneApiHost", "127.0.0.1").trim()
+val publicApiBaseUrl = localConfig.getProperty("publicApiBaseUrl", "https://api.54.254.11.111.sslip.io/").trim()
+if (publicApiBaseUrl.isNotEmpty()) {
+    require(publicApiBaseUrl.startsWith("https://") &&
+            publicApiBaseUrl.endsWith("/") &&
+            !publicApiBaseUrl.contains('"') &&
+            !publicApiBaseUrl.contains('\\')) {
+        "publicApiBaseUrl must be a valid HTTPS base URL ending in '/'"
+    }
+}
 
 
 android {
@@ -26,12 +36,18 @@ android {
         versionCode = 1
         versionName = "1.0"
         buildConfigField("String", "PHONE_API_BASE_URL", "\"http://$phoneApiHost:8080/\"")
+        buildConfigField("String", "PUBLIC_API_BASE_URL", "\"$publicApiBaseUrl\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
+        debug {
+            // Local emulator/laptop HTTP debugging is allowed only in debug builds.
+            manifestPlaceholders["allowCleartextTraffic"] = "true"
+        }
         release {
+            manifestPlaceholders["allowCleartextTraffic"] = "false"
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),

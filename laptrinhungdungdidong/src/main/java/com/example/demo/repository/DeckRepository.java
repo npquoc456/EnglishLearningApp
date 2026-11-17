@@ -21,4 +21,5 @@ public interface DeckRepository extends JpaRepository<decks, Long> {
 
     // Tìm kiếm bộ thẻ công khai theo từ khóa
     List<decks> findByVisibilityAndTitleContainingIgnoreCase(DeckVisibility visibility, String keyword);
+    boolean existsByIdAndUserId(Long id, Long userId);
 }

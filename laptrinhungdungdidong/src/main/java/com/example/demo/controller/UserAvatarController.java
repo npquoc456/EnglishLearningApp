@@ -6,6 +6,7 @@ import com.example.demo.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -23,6 +24,7 @@ public class UserAvatarController {
         this.userRepository = userRepository;
     }
 
+    @PreAuthorize("@owner.isSelf(#userId)")
     @PutMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Transactional
     public ResponseEntity<Void> upload(@PathVariable Long userId,
@@ -54,6 +56,7 @@ public class UserAvatarController {
         return ResponseEntity.noContent().build();
     }
 
+    @PreAuthorize("@owner.isSelf(#userId)")
     @GetMapping
     @Transactional
     public ResponseEntity<byte[]> download(@PathVariable Long userId) {

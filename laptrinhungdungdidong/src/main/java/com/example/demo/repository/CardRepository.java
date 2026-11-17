@@ -18,4 +18,5 @@ public interface  CardRepository extends JpaRepository<cards, Long>{
 
     void deleteByDeckId(Long deckId); 
 
+    boolean existsByIdAndDeck_User_Id(Long id, Long userId);
 }

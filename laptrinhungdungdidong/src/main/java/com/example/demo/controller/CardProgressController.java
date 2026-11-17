@@ -7,6 +7,7 @@ import com.example.demo.service.CardProgressService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 import java.util.Map;
@@ -17,21 +18,25 @@ import java.util.Map;
 public class CardProgressController {
     private final CardProgressService service;
 
+    @PreAuthorize("@owner.isSelf(#userId)")
     @GetMapping("/user/{userId}/summary")
     public StudySummaryResponse summary(@PathVariable Long userId) {
         return service.summary(userId);
     }
 
+    @PreAuthorize("@owner.isSelf(#request.userId()) and @owner.ownsCard(#request.cardId())")
     @PostMapping("/review")
     public CardProgressResponse review(@Valid @RequestBody CardReviewRequest request) {
         return service.review(request);
     }
 
+    @PreAuthorize("@owner.isSelf(#userId) and @owner.ownsDeck(#deckId)")
     @GetMapping("/user/{userId}/deck/{deckId}")
     public List<CardProgressResponse> byDeck(@PathVariable Long userId, @PathVariable Long deckId) {
         return service.byDeck(userId, deckId);
     }
 
+    @PreAuthorize("@owner.isSelf(#userId)")
     @GetMapping("/user/{userId}/due-count")
     public Map<String, Long> dueCount(@PathVariable Long userId) {
         return Map.of("count", service.countDue(userId));

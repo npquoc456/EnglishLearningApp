@@ -15,4 +15,5 @@ public interface StudySessionRepository extends JpaRepository<studySessions, Lon
 
     // Lấy lịch sử học của user trên một bộ thẻ cụ thể
     List<studySessions> findByUserIdAndDeckIdOrderByStudiedAtDesc(Long userId, Long deckId);
+    boolean existsByIdAndUserId(Long id, Long userId);
 }

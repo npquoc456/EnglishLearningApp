@@ -11,7 +11,8 @@ data class UserResponse(
     val dailyNewCardsLimit: Int?,
     val autoPlayAudio: Boolean?,
     val reminderTime: String?,
-    val createdAt: String?
+    val createdAt: String?,
+    val accessToken: String? = null
 )
 
 data class UserLoginRequest(

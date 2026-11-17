@@ -8,18 +8,19 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/study-sessions")
-@CrossOrigin(origins = "*")
 @RequiredArgsConstructor
 public class StudySessionController {
 
     private final StudySessionService studySessionService;
 
+    @PreAuthorize("@owner.selfAndDeck(#request.userId, #request.deckId)")
     @PostMapping
     public ResponseEntity<StudySessionResponse> createStudySession(
             @Valid @RequestBody StudySessionCreateRequest request) {
@@ -27,16 +28,19 @@ public class StudySessionController {
                 .body(studySessionService.createStudySession(request));
     }
 
+    @PreAuthorize("denyAll()")
     @GetMapping
     public ResponseEntity<List<StudySessionResponse>> getAllSessions() {
         return ResponseEntity.ok(studySessionService.getAllSessions());
     }
 
+    @PreAuthorize("@owner.isSelf(#userId)")
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<StudySessionResponse>> getSessionsByUserId(@PathVariable Long userId) {
         return ResponseEntity.ok(studySessionService.getSessionsByUserId(userId));
     }
 
+    @PreAuthorize("@owner.isSelf(#userId) and @owner.ownsDeck(#deckId)")
     @GetMapping("/user/{userId}/deck/{deckId}")
     public ResponseEntity<List<StudySessionResponse>> getSessionsByUserAndDeck(
             @PathVariable Long userId,
