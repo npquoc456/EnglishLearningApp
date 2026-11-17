@@ -45,11 +45,8 @@ class LoginActivity : AppCompatActivity() {
             performLogin()
         }
 
-        binding.btnQuickLogin.setOnClickListener {
-            binding.etLoginEmail.setText("minh.hoang@example.com")
-            binding.etLoginPassword.setText("password123")
-            performLogin()
-        }
+        // The demo account is not provisioned on RDS; do not suggest a fake login.
+        binding.btnQuickLogin.visibility = View.GONE
 
         binding.btnNavRegister.setOnClickListener {
             startActivity(Intent(this, RegisterActivity::class.java))
@@ -85,23 +82,8 @@ class LoginActivity : AppCompatActivity() {
                     showError("Email hoặc mật khẩu không chính xác")
                 }
             } catch (e: Exception) {
-                // If backend is still connecting or unreachable, allow demo login with sample user
-                val fallbackUser = UserResponse(
-                    id = 1L,
-                    fullName = "Hoàng Minh",
-                    email = email,
-                    avatarUrl = null,
-                    currentStreak = 5,
-                    lastStudyDate = "2026-11-15",
-                    defaultStudyDirection = null,
-                    dailyNewCardsLimit = 20,
-                    autoPlayAudio = true,
-                    reminderTime = "20:30",
-                    createdAt = null
-                )
-                sessionManager.saveUser(fallbackUser)
-                Toast.makeText(this@LoginActivity, "Đăng nhập chế độ Offline", Toast.LENGTH_SHORT).show()
-                goToMainActivity()
+                if (e is kotlinx.coroutines.CancellationException) throw e
+                showError("Không kết nối được máy chủ. Kiểm tra Wi-Fi và backend rồi thử lại.")
             } finally {
                 binding.btnLogin.isEnabled = true
                 binding.btnLogin.text = "Đăng nhập"

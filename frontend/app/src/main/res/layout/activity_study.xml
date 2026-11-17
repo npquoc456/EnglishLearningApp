@@ -69,10 +69,11 @@
                 android:src="@drawable/ic_fire" />
 
             <TextView
+                android:id="@+id/tvStudyStreak"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
-                android:text="5 ngày"
+                android:text="0 ngày"
                 android:textColor="@color/accent_red"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -332,6 +333,96 @@
                 </LinearLayout>
 
             </androidx.cardview.widget.CardView>
+
+            <!-- Real microphone playback and SRS difficulty choices -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="8dp">
+                <Button
+                    android:id="@+id/btnPlaybackRecording"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:enabled="false"
+                    android:text="▶ Nghe ghi âm"
+                    android:textAllCaps="false" />
+                <TextView
+                    android:id="@+id/tvRecordingStatus"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:layout_weight="1"
+                    android:text="Chạm micro để thu âm"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:text="Bạn nhớ thẻ này ở mức nào?"
+                android:textColor="@color/text_primary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:gravity="center"
+                android:orientation="horizontal">
+                <Button
+                    android:id="@+id/btnRateAgain"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:minWidth="0dp"
+                    android:text="Quên"
+                    android:textAllCaps="false"
+                    android:textSize="11sp" />
+                <Button
+                    android:id="@+id/btnRateHard"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:layout_weight="1"
+                    android:minWidth="0dp"
+                    android:text="Khó"
+                    android:textAllCaps="false"
+                    android:textSize="11sp" />
+                <Button
+                    android:id="@+id/btnRateGood"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:layout_weight="1"
+                    android:minWidth="0dp"
+                    android:text="Nhớ"
+                    android:textAllCaps="false"
+                    android:textSize="11sp" />
+                <Button
+                    android:id="@+id/btnRateEasy"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:layout_weight="1"
+                    android:minWidth="0dp"
+                    android:text="Rất dễ"
+                    android:textAllCaps="false"
+                    android:textSize="11sp" />
+            </LinearLayout>
+            <TextView
+                android:id="@+id/tvNextReview"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:gravity="center"
+                android:text="Quên: 10 phút • Khó: 1 ngày • Nhớ: 1–3 ngày • Rất dễ: 4 ngày"
+                android:textColor="@color/text_muted"
+                android:textSize="11sp" />
 
             <!-- Shortcut Hint -->
             <TextView

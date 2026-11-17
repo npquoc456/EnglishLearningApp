@@ -1,10 +1,17 @@
-import java.io.File
-import java.net.Socket
-import java.util.concurrent.TimeUnit
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
 }
+
+// Local-only property for a phone on the same Wi-Fi as the laptop.
+// In frontend/local.properties: phoneApiHost=<laptop LAN IP>
+val localConfig = Properties().apply {
+    val propsFile = rootProject.file("local.properties")
+    if (propsFile.exists()) propsFile.inputStream().use { load(it) }
+}
+val phoneApiHost = localConfig.getProperty("phoneApiHost", "127.0.0.1")
+
 
 android {
     namespace = "com.example.laptrinhungdungdidong"
@@ -18,6 +25,7 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
+        buildConfigField("String", "PHONE_API_BASE_URL", "\"http://$phoneApiHost:8080/\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -38,6 +46,7 @@ android {
 
     buildFeatures {
         viewBinding = true
+        buildConfig = true
     }
 }
 
@@ -67,67 +76,4 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)
-}
-
-val backendDirectoryPath = rootProject.projectDir.parentFile.resolve("laptrinhungdungdidong").absolutePath
-
-tasks.register("startBackendServer") {
-    group = "application"
-    description = "Checks and starts the Spring Boot backend server automatically before running frontend."
-    val dirPath = backendDirectoryPath
-    doLast {
-        val port = 8080
-        val isRunning = try {
-            Socket("127.0.0.1", port).use { true }
-        } catch (_: Exception) {
-            false
-        }
-
-        if (isRunning) {
-            println(">>> [Backend] Server is already active on http://localhost:$port")
-        } else {
-            println(">>> [Backend] Starting Spring Boot server automatically...")
-            val backendDir = File(dirPath)
-            val jarFile = File(backendDir, "build/libs/demo-0.0.1-SNAPSHOT.jar")
-
-            if (!jarFile.exists()) {
-                println(">>> [Backend] Building backend jar first...")
-                val buildPb = ProcessBuilder("./gradlew", "bootJar", "-x", "test")
-                buildPb.directory(backendDir)
-                buildPb.inheritIO().start().waitFor()
-            }
-
-            val logFile = File(backendDir, "backend_runtime.log")
-            val pb = ProcessBuilder("java", "-jar", jarFile.absolutePath)
-            pb.directory(backendDir)
-            pb.redirectOutput(ProcessBuilder.Redirect.appendTo(logFile))
-            pb.redirectError(ProcessBuilder.Redirect.appendTo(logFile))
-            pb.start()
-            println(">>> [Backend] Process launched. Output redirected to: ${logFile.absolutePath}")
-
-            var started = false
-            for (i in 1..20) {
-                Thread.sleep(500)
-                try {
-                    Socket("127.0.0.1", port).use { started = true }
-                    break
-                } catch (_: Exception) {}
-            }
-            if (started) {
-                println(">>> [Backend] Backend successfully started on port $port!")
-            } else {
-                println(">>> [Backend] Backend is initializing in background...")
-            }
-        }
-
-        try {
-            val adbProcess = ProcessBuilder("adb", "reverse", "tcp:8080", "tcp:8080").start()
-            adbProcess.waitFor(1, TimeUnit.SECONDS)
-            println(">>> [ADB] Reverse port 8080 configured.")
-        } catch (_: Exception) {}
-    }
-}
-
-tasks.named("preBuild") {
-    dependsOn("startBackendServer")
 }

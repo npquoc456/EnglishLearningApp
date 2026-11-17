@@ -18,6 +18,7 @@ import com.example.laptrinhungdungdidong.ui.adapters.UrgentCardAdapter
 import com.example.laptrinhungdungdidong.ui.deck.CreateDeckActivity
 import com.example.laptrinhungdungdidong.ui.study.StudyActivity
 import com.example.laptrinhungdungdidong.utils.TtsHelper
+import com.example.laptrinhungdungdidong.utils.AvatarHelper
 import kotlinx.coroutines.launch
 
 class HomeFragment : Fragment() {
@@ -45,10 +46,15 @@ class HomeFragment : Fragment() {
 
         sessionManager = SessionManager(requireContext())
         ttsHelper = TtsHelper(requireContext())
+        sessionManager.getUser()?.let { AvatarHelper.load(it.id, binding.ivAvatar, viewLifecycleOwner.lifecycleScope) }
+        binding.btnAvatar.setOnClickListener {
+            (activity as? com.example.laptrinhungdungdidong.MainActivity)
+                ?.findViewById<com.google.android.material.bottomnavigation.BottomNavigationView>(
+                    com.example.laptrinhungdungdidong.R.id.bottom_navigation)
+                ?.selectedItemId = com.example.laptrinhungdungdidong.R.id.nav_profile
+        }
 
         setupUrgentRecyclerView()
-        loadUserData()
-        loadHomeData()
 
         binding.btnCreateDeckFromHome.setOnClickListener {
             startActivity(Intent(requireContext(), CreateDeckActivity::class.java))
@@ -97,6 +103,12 @@ class HomeFragment : Fragment() {
     private fun loadUserData() {
         val user = sessionManager.getUser()
         if (user != null) {
+            val to = java.util.Date()
+            val from = java.util.Calendar.getInstance().apply {
+                add(java.util.Calendar.DAY_OF_YEAR, -6)
+            }.time
+            val dateFormat = java.text.SimpleDateFormat("d 'Thg' M", java.util.Locale.forLanguageTag("vi-VN"))
+            binding.tvWeeklyDateRange.text = dateFormat.format(from) + " – " + dateFormat.format(to)
             val name = user.fullName ?: "Bạn"
             val firstName = name.split(" ").lastOrNull() ?: name
             binding.tvGreetingSub.text = "CHÀO ${firstName.uppercase()}, SẴN SÀNG BỨT PHÁ?"
@@ -137,7 +149,7 @@ class HomeFragment : Fragment() {
                         binding.layoutNoCardsDue.visibility = View.GONE
                         binding.layoutSRSControls.visibility = View.VISIBLE
                         binding.pbSRS.max = totalCards
-                        binding.pbSRS.progress = (totalCards / 3).coerceAtLeast(1)
+                        binding.pbSRS.progress = 0
                         binding.tvSrsMastered.text = "● Đã thuộc: 0"
                         binding.tvSrsLearning.text = "● Đang học: $totalCards"
                         binding.tvSrsNew.text = "● Mới: $totalCards"
@@ -167,7 +179,8 @@ class HomeFragment : Fragment() {
                     binding.tvSrsLearning.text = "● Đang học: 0"
                     binding.tvSrsNew.text = "● Mới: 0"
                 }
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
                 firstDeckId = null
                 firstDeckTitle = null
                 binding.tvDueCardCount.text = "0 thẻ cần ôn"
@@ -180,11 +193,55 @@ class HomeFragment : Fragment() {
                 binding.tvSrsNew.text = "● Mới: 0"
             }
 
+            // Real SRS counters; no guessed "mastered" or fake completion progress.
+            try {
+                val summaryResponse = ApiClient.service.getStudySummary(user.id)
+                if (summaryResponse.isSuccessful) {
+                    val stat = summaryResponse.body()
+                    if (stat != null) {
+                        val due = stat.due.toInt()
+                        val total = stat.total.toInt()
+                        binding.tvDueCardCount.text = "$due thẻ cần ôn"
+                        binding.tvUrgentBadge.text = "$due từ"
+                        binding.layoutSRSAction.visibility = if (due > 0) View.VISIBLE else View.GONE
+                        binding.layoutNoCardsDue.visibility = if (due > 0) View.GONE else View.VISIBLE
+                        binding.layoutSRSControls.visibility = if (total > 0) View.VISIBLE else View.GONE
+                        binding.pbSRS.max = total.coerceAtLeast(1)
+                        binding.pbSRS.progress = stat.mastered.toInt()
+                        binding.tvSrsMastered.text = "● Đã thuộc: ${stat.mastered}"
+                        binding.tvSrsLearning.text = "● Đang học: ${stat.learning}"
+                        binding.tvSrsNew.text = "● Mới: ${stat.newCards}"
+                    }
+                }
+            } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
+            }
+
+            // Refresh streak/profile values from RDS after a completed study session.
+            try {
+                val freshUser = ApiClient.service.getUserById(user.id)
+                if (freshUser.isSuccessful && freshUser.body() != null) {
+                    sessionManager.saveUser(freshUser.body()!!)
+                    loadUserData()
+                }
+            } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
+            }
+
             // Real study stats for this user
             try {
                 val sessionsRes = ApiClient.service.getSessionsByUserId(user.id)
                 if (sessionsRes.isSuccessful && sessionsRes.body() != null && sessionsRes.body()!!.isNotEmpty()) {
-                    val sessions = sessionsRes.body()!!
+                    val cutoff = java.util.Calendar.getInstance().apply {
+                        add(java.util.Calendar.DAY_OF_YEAR, -7)
+                    }.time
+                    val parser = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.US)
+                    val sessions = sessionsRes.body()!!.filter { session ->
+                        try {
+                            val raw = session.studiedAt?.take(19) ?: ""
+                            parser.parse(raw)?.after(cutoff) == true
+                        } catch (_: Exception) { false }
+                    }
                     val totalReviewed = sessions.sumOf { it.totalCards }
                     val totalCorrect = sessions.sumOf { it.correctCards }
                     val totalMinutes = sessions.sumOf { (it.durationSeconds ?: 0) / 60 }
@@ -202,7 +259,8 @@ class HomeFragment : Fragment() {
                     binding.tvWeeklyStudyTime.text = "0p"
                     binding.tvWeeklyStudyTimeSub.text = "0 phút"
                 }
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
                 binding.tvWeeklyReviewedCards.text = "0"
                 binding.tvWeeklyAccuracy.text = "0%"
                 binding.tvWeeklyStudyTime.text = "0p"
@@ -211,7 +269,7 @@ class HomeFragment : Fragment() {
             // Urgent cards
             binding.rvUrgentCards.visibility = View.GONE
             binding.tvEmptyHomeUrgent.visibility = View.VISIBLE
-            binding.tvUrgentBadge.text = "0 từ"
+            // Badge already set from SRS due-count when the API is available.
         }
     }
 

@@ -88,27 +88,8 @@ class RegisterActivity : AppCompatActivity() {
                     showError("Email đã tồn tại hoặc không hợp lệ")
                 }
             } catch (e: Exception) {
-                // Fallback offline demo registration
-                val fallbackUser = UserResponse(
-                    id = System.currentTimeMillis(),
-                    fullName = fullName,
-                    email = email,
-                    avatarUrl = null,
-                    currentStreak = 1,
-                    lastStudyDate = "2026-11-15",
-                    defaultStudyDirection = null,
-                    dailyNewCardsLimit = 20,
-                    autoPlayAudio = true,
-                    reminderTime = "20:30",
-                    createdAt = null
-                )
-                sessionManager.saveUser(fallbackUser)
-                Toast.makeText(this@RegisterActivity, "Đăng ký thành công (Offline)", Toast.LENGTH_SHORT).show()
-                val intent = Intent(this@RegisterActivity, MainActivity::class.java).apply {
-                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                }
-                startActivity(intent)
-                finish()
+                if (e is kotlinx.coroutines.CancellationException) throw e
+                showError("Không kết nối được máy chủ. Kiểm tra Wi-Fi và backend rồi thử lại.")
             } finally {
                 binding.btnRegister.isEnabled = true
                 binding.btnRegister.text = "Đăng ký tài khoản"

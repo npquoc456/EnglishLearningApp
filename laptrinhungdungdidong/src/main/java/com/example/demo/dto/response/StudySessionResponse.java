@@ -14,6 +14,7 @@ public class StudySessionResponse {
     private Long id;
     private Long userId;
     private Long deckId;
+    private String deckTitle;
     private StudyModeType studyMode;
     private Integer totalCards;
     private Integer correctCards;

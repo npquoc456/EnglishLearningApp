@@ -1,6 +1,10 @@
 package com.example.laptrinhungdungdidong.ui.profile
 
 import android.content.Intent
+import android.net.Uri
+import androidx.activity.result.contract.ActivityResultContracts
+import com.example.laptrinhungdungdidong.utils.AvatarHelper
+import com.example.laptrinhungdungdidong.utils.AvatarUploader
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -24,6 +28,11 @@ class ProfileFragment : Fragment() {
 
     private lateinit var sessionManager: SessionManager
 
+    private val selectAvatar = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        if (uri != null) uploadSelectedAvatar(uri)
+    }
+
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -39,13 +48,16 @@ class ProfileFragment : Fragment() {
         sessionManager = SessionManager(requireContext())
         loadUserData()
         setupListeners()
+        binding.btnEditProfile.setOnClickListener { selectAvatar.launch("image/*") }
+        binding.ivUserAvatar.setOnClickListener { selectAvatar.launch("image/*") }
     }
 
     private fun loadUserData() {
         val user = sessionManager.getUser()
         if (user != null) {
             binding.tvFullName.text = user.fullName ?: "Hoàng Minh"
-            binding.tvEmail.text = user.email ?: "minh.hoang@example.com"
+            binding.tvEmail.text = user.email ?: ""
+            AvatarHelper.load(user.id, binding.ivUserAvatar, viewLifecycleOwner.lifecycleScope)
             val streak = user.currentStreak ?: 0
             binding.tvProfileStreak.text = "$streak ngày"
             binding.tvStreakCount.text = "🔥 $streak"
@@ -69,7 +81,8 @@ class ProfileFragment : Fragment() {
                         binding.tvMasteredStat.text = "🎴 0"
                         binding.tvXpStat.text = "⚡ 0"
                     }
-                } catch (_: Exception) {
+                } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
                     binding.tvMasteredStat.text = "🎴 0"
                     binding.tvXpStat.text = "⚡ 0"
                 }
@@ -152,6 +165,28 @@ class ProfileFragment : Fragment() {
         }
     }
 
+    private fun uploadSelectedAvatar(uri: Uri) {
+        val user = sessionManager.getUser() ?: return
+        val context = requireContext().applicationContext
+        binding.btnEditProfile.isEnabled = false
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val saved = AvatarUploader.upload(context, user.id, uri)
+                if (saved) {
+                    Toast.makeText(requireContext(), "Đã đổi ảnh đại diện!", Toast.LENGTH_SHORT).show()
+                    AvatarHelper.load(user.id, binding.ivUserAvatar, viewLifecycleOwner.lifecycleScope)
+                } else {
+                    Toast.makeText(requireContext(), "Lưu ảnh không thành công", Toast.LENGTH_LONG).show()
+                }
+            } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
+                Toast.makeText(requireContext(), "Lỗi ảnh: " + (e.message ?: "Không thể tải ảnh"), Toast.LENGTH_LONG).show()
+            } finally {
+                if (_binding != null) binding.btnEditProfile.isEnabled = true
+            }
+        }
+    }
+
     private fun saveSettings() {
         val user = sessionManager.getUser() ?: return
         val newLimit = binding.sbDailyLimit.progress.coerceAtLeast(5)
@@ -167,7 +202,8 @@ class ProfileFragment : Fragment() {
                 if (res.isSuccessful && res.body() != null) {
                     sessionManager.saveUser(res.body()!!)
                 }
-            } catch (_: Exception) {}
+            } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e}
         }
     }
 

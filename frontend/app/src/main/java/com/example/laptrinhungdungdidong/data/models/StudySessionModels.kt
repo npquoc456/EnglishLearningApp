@@ -4,6 +4,7 @@ data class StudySessionResponse(
     val id: Long,
     val userId: Long,
     val deckId: Long?,
+    val deckTitle: String? = null,
     val studyMode: String,
     val totalCards: Int,
     val correctCards: Int,

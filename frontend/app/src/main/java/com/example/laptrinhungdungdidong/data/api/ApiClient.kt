@@ -1,5 +1,7 @@
 package com.example.laptrinhungdungdidong.data.api
 
+import android.os.Build
+import com.example.laptrinhungdungdidong.BuildConfig
 import com.google.gson.GsonBuilder
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -8,17 +10,25 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
 object ApiClient {
-    // 10.0.2.2 is host loopback for Android emulator.
-    // When using `adb reverse tcp:8080 tcp:8080`, localhost also works.
-    private const val BASE_URL = "http://10.0.2.2:8080/"
+    // Emulator uses special host loopback. Physical phones use the laptop LAN IP
+    // configured locally in frontend/local.properties (or adb reverse with 127.0.0.1).
+    private val BASE_URL: String =
+        if (Build.FINGERPRINT.startsWith("generic") ||
+            Build.FINGERPRINT.contains("emulator", ignoreCase = true) ||
+            Build.MODEL.contains("sdk_gphone", ignoreCase = true)
+        ) {
+            "http://10.0.2.2:8080/"
+        } else {
+            BuildConfig.PHONE_API_BASE_URL
+        }
 
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
-        level = HttpLoggingInterceptor.Level.BODY
+        level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BASIC else HttpLoggingInterceptor.Level.NONE
     }
 
     private val okHttpClient = OkHttpClient.Builder()
         .addInterceptor(loggingInterceptor)
-        .connectTimeout(15, TimeUnit.SECONDS)
+        .connectTimeout(8, TimeUnit.SECONDS)
         .readTimeout(15, TimeUnit.SECONDS)
         .writeTimeout(15, TimeUnit.SECONDS)
         .build()

@@ -57,7 +57,6 @@ class DecksFragment : Fragment() {
             startActivity(Intent(requireContext(), CreateDeckActivity::class.java))
         }
 
-        loadDecks()
     }
 
     override fun onResume() {
@@ -219,7 +218,8 @@ class DecksFragment : Fragment() {
                     deckAdapter.updateData(allDecks)
                     updateVisibility(allDecks)
                 }
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
                 allDecks = emptyList()
                 deckAdapter.updateData(allDecks)
                 updateVisibility(allDecks)

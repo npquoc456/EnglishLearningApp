@@ -33,7 +33,8 @@ class SessionManager(context: Context) {
     }
 
     fun isLoggedIn(): Boolean {
-        return prefs.getBoolean(KEY_IS_LOGGED_IN, false)
+        // A saved flag without a parseable user is not a valid session.
+        return prefs.getBoolean(KEY_IS_LOGGED_IN, false) && getUser() != null
     }
 
     fun logout() {

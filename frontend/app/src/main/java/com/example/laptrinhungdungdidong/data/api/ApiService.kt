@@ -2,9 +2,32 @@ package com.example.laptrinhungdungdidong.data.api
 
 import com.example.laptrinhungdungdidong.data.models.*
 import retrofit2.Response
+import okhttp3.MultipartBody
+import okhttp3.ResponseBody
 import retrofit2.http.*
 
 interface ApiService {
+    @GET("api/progress/user/{userId}/deck/{deckId}")
+    suspend fun getCardProgress(@Path("userId") userId: Long,
+                                @Path("deckId") deckId: Long): Response<List<CardProgressResponse>>
+
+    @GET("api/progress/user/{userId}/summary")
+    suspend fun getStudySummary(@Path("userId") userId: Long): Response<StudySummaryResponse>
+
+    @GET("api/progress/user/{userId}/due-count")
+    suspend fun getDueCount(@Path("userId") userId: Long): Response<DueCountResponse>
+
+    @POST("api/progress/review")
+    suspend fun reviewCard(@Body request: CardReviewRequest): Response<CardProgressResponse>
+
+    @Multipart
+    @PUT("api/users/{id}/avatar")
+    suspend fun uploadAvatar(@Path("id") id: Long,
+                             @Part image: MultipartBody.Part): Response<Unit>
+
+    @GET("api/users/{id}/avatar")
+    suspend fun getAvatar(@Path("id") id: Long): Response<ResponseBody>
+
 
     // --- Users ---
     @POST("api/users/login")

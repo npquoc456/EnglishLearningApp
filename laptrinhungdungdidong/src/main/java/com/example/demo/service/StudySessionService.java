@@ -106,6 +106,7 @@ public class StudySessionService {
                 .id(session.getId())
                 .userId(session.getUser().getId())
                 .deckId(session.getDeck() != null ? session.getDeck().getId() : null)
+                .deckTitle(session.getDeck() != null ? session.getDeck().getTitle() : "Ôn tập tổng hợp")
                 .studyMode(session.getStudyMode())
                 .totalCards(session.getTotalCards())
                 .correctCards(session.getCorrectCards())

@@ -284,9 +284,10 @@
                 android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/tvWeeklyDateRange"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="17 Thg 5 – 24 Thg 5"
+                android:text="Tuần này"
                 android:textColor="@color/text_muted"
                 android:textSize="11sp" />
         </LinearLayout>

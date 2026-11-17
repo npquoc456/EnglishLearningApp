@@ -2,7 +2,6 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.2.5'
     id 'io.spring.dependency-management' version '1.1.4'
-    id 'org.openjfx.javafxplugin' version '0.1.0'
 }
 
 group = 'com.example'
@@ -18,11 +17,6 @@ repositories {
     mavenCentral()
 }
 
-javafx {
-    version = "17.0.6"
-    modules = [ 'javafx.controls', 'javafx.web', 'javafx.graphics' ]
-}
-
 tasks.withType(JavaCompile).configureEach {
     options.compilerArgs.add('-parameters')
 }
@@ -32,10 +26,9 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.security:spring-security-crypto'
 
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0'
-    implementation 'com.google.zxing:core:3.5.3'
-    implementation 'com.google.zxing:javase:3.5.3'
 
     runtimeOnly 'com.mysql:mysql-connector-j'
 

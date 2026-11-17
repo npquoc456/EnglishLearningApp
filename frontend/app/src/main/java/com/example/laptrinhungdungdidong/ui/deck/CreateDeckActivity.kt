@@ -36,6 +36,7 @@ class CreateDeckActivity : AppCompatActivity() {
     private lateinit var binding: ActivityCreateDeckBinding
     private lateinit var ttsHelper: TtsHelper
     private val cardViews = mutableListOf<ItemCreateCardRowBinding>()
+    private val maxCardsPerDeck = 50
     private var cameraImageUri: Uri? = null
 
     private val takePictureLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
@@ -201,8 +202,14 @@ class CreateDeckActivity : AppCompatActivity() {
             }
         }
 
-        // Auto populate all scanned cards
-        for (pair in pairs) {
+        // Avoid creating hundreds of complex views from an OCR image on low-RAM phones.
+        val remainingSlots = (maxCardsPerDeck - cardViews.size).coerceAtLeast(0)
+        val acceptedPairs = pairs.take(remainingSlots)
+        if (acceptedPairs.isEmpty()) {
+            Toast.makeText(this, "Mỗi bộ thẻ tối đa $maxCardsPerDeck thẻ", Toast.LENGTH_SHORT).show()
+            return
+        }
+        for (pair in acceptedPairs) {
             addCardRow(
                 term = pair.first,
                 definition = pair.second,
@@ -213,7 +220,12 @@ class CreateDeckActivity : AppCompatActivity() {
             )
         }
 
-        Toast.makeText(this, "Đã thêm thành công ${pairs.size} thẻ từ vựng vào bộ thẻ!", Toast.LENGTH_LONG).show()
+        val message = if (acceptedPairs.size < pairs.size) {
+            "Đã thêm ${acceptedPairs.size}/${pairs.size} thẻ (giới hạn $maxCardsPerDeck thẻ/bộ)"
+        } else {
+            "Đã thêm ${acceptedPairs.size} thẻ từ vựng!"
+        }
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
     }
 
     private fun addCardRow(
@@ -224,6 +236,10 @@ class CreateDeckActivity : AppCompatActivity() {
         example: String,
         synonyms: String
     ) {
+        if (cardViews.size >= maxCardsPerDeck) {
+            Toast.makeText(this, "Giới hạn $maxCardsPerDeck thẻ/bộ", Toast.LENGTH_SHORT).show()
+            return
+        }
         val index = cardViews.size + 1
         val rowBinding = ItemCreateCardRowBinding.inflate(LayoutInflater.from(this), binding.llCardsContainer, false)
 
@@ -242,7 +258,7 @@ class CreateDeckActivity : AppCompatActivity() {
 
         val performLookup = { query: String ->
             EnglishDictionaryHelper.lookup(query) { suggestion ->
-                if (!isFinishing && !isDestroyed) {
+                if (!isFinishing && !isDestroyed && rowBinding in cardViews) {
                     val currentText = rowBinding.etTerm.text.toString().trim()
                     if (currentText.equals(query, ignoreCase = true) && suggestion != null && suggestion.definitions.isNotEmpty()) {
                         rowBinding.layoutMeaningSuggestions.visibility = android.view.View.VISIBLE
@@ -290,10 +306,10 @@ class CreateDeckActivity : AppCompatActivity() {
                     return
                 }
 
-                // Debounce 250ms để không gọi liên tục khi người dùng đang gõ phím
+                // Debounce 500ms để giảm request khi người dùng đang gõ phím
                 val job = Runnable { performLookup(query) }
                 searchJob = job
-                searchHandler.postDelayed(job, 250)
+                searchHandler.postDelayed(job, 500)
             }
             override fun afterTextChanged(s: android.text.Editable?) {}
         })
@@ -422,7 +438,10 @@ class CreateDeckActivity : AppCompatActivity() {
                             wordType = cardReq.wordType,
                             orderIndex = idx + 1
                         )
-                        ApiClient.service.createCard(cReq)
+                        val cardResult = ApiClient.service.createCard(cReq)
+                        if (!cardResult.isSuccessful) {
+                            throw IllegalStateException("Không thể lưu thẻ số ${idx + 1} (HTTP ${cardResult.code()})")
+                        }
                     }
                     Toast.makeText(this@CreateDeckActivity, "Tạo bộ thẻ thành công!", Toast.LENGTH_SHORT).show()
                     finish()
@@ -430,7 +449,8 @@ class CreateDeckActivity : AppCompatActivity() {
                     Toast.makeText(this@CreateDeckActivity, "Không thể lưu bộ thẻ lên server", Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
-                Toast.makeText(this@CreateDeckActivity, "Lỗi kết nối: ${e.message}", Toast.LENGTH_SHORT).show()
+                if (e is kotlinx.coroutines.CancellationException) throw e
+                Toast.makeText(this@CreateDeckActivity, "Lưu chưa hoàn tất: ${e.message}", Toast.LENGTH_LONG).show()
             } finally {
                 binding.btnSubmitCreateDeck.isEnabled = true
                 updateHeaderAndButton()

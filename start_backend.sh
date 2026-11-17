@@ -1,32 +1,43 @@
-#!/bin/bash
-# Script khởi động Backend Spring Boot ở chế độ background
-
+#!/usr/bin/env bash
+set -euo pipefail
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BACKEND_DIR="$PROJECT_DIR/laptrinhungdungdidong"
-JAR_FILE="$BACKEND_DIR/build/libs/demo-0.0.1-SNAPSHOT.jar"
-LOG_FILE="$BACKEND_DIR/backend_runtime.log"
+JAR="$BACKEND_DIR/build/libs/demo-0.0.1-SNAPSHOT.jar"
+ENV_FILE="$HOME/.config/englishlearning-mobile/rds.env"
+LOG_DIR="$HOME/.local/state/englishlearning-mobile"
+LOG="$LOG_DIR/backend.log"
 
-if lsof -Pi :8080 -sTCP:LISTEN -t >/dev/null ; then
-    echo ">>> [Backend] Spring Boot đang chạy sẵn trên cổng 8080."
-else
-    echo ">>> [Backend] Đang khởi động Spring Boot..."
-    if [ ! -f "$JAR_FILE" ]; then
-        echo ">>> [Backend] Đang đóng gói file JAR..."
-        cd "$BACKEND_DIR" && ./gradlew bootJar -x test
+if [[ -r "$ENV_FILE" ]]; then
+  source "$ENV_FILE"
+fi
+# Java 17 for Spring Boot (installed for this project without changing system Java).
+JDK17="$HOME/.local/opt/jdks/amazon-corretto-17.0.21.0.11-linux-x64"
+if [[ -x "$JDK17/bin/java" ]]; then
+  export JAVA_HOME="$JDK17"
+  export PATH="$JAVA_HOME/bin:$PATH"
+fi
+mkdir -p "$LOG_DIR"
+chmod 700 "$LOG_DIR"
+
+if ! curl --fail --silent --max-time 2 http://127.0.0.1:8080/api/decks >/dev/null 2>&1; then
+  if [[ ! -f "$JAR" ]] || [[ -n "$(find "$BACKEND_DIR/src" "$BACKEND_DIR/build.gradle" -type f -newer "$JAR" -print -quit 2>/dev/null)" ]]; then
+    echo "[Backend] Building Spring Boot jar..."
+    (cd "$BACKEND_DIR" && ./gradlew bootJar -x test --no-daemon --console=plain)
+  fi
+  echo "[Backend] Starting on port 8080 (DB config loaded from private file)."
+  (cd "$BACKEND_DIR"; nohup java -jar "$JAR" >> "$LOG" 2>&1 < /dev/null &)
+  for i in {1..30}; do
+    if curl --fail --silent --max-time 2 http://127.0.0.1:8080/api/decks >/dev/null 2>&1; then
+      echo "[Backend] Listening at http://127.0.0.1:8080"
+      break
     fi
-    nohup java -jar "$JAR_FILE" >> "$LOG_FILE" 2>&1 &
-    
-    echo ">>> [Backend] Đang chờ backend sẵn sàng..."
-    for i in {1..20}; do
-        if nc -z localhost 8080; then
-            echo ">>> [Backend] Spring Boot đã sẵn sàng trên http://localhost:8080 !"
-            break
-        fi
-        sleep 0.5
-    done
+    sleep 1
+  done
+else
+  echo "[Backend] Already running."
 fi
-
-# Chuyển tiếp cổng 8080 cho máy ảo/thiết bị Android nếu adb đang kết nối
-if command -v adb &> /dev/null; then
-    adb reverse tcp:8080 tcp:8080 2>/dev/null && echo ">>> [ADB] Đã liên kết reverse tcp:8080 tcp:8080."
+ADB="$HOME/Android/Sdk/platform-tools/adb"
+if [[ -x "$ADB" ]]; then
+  "$ADB" reverse tcp:8080 tcp:8080 >/dev/null 2>&1 || true
 fi
+echo "[Backend] Log: $LOG"

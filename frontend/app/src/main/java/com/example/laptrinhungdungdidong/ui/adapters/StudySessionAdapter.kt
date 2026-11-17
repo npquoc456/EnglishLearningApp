@@ -30,19 +30,14 @@ class StudySessionAdapter(
         RecyclerView.ViewHolder(binding.root) {
 
         fun bind(session: StudySessionResponse, pos: Int) {
-            val title = when (pos % 3) {
-                0 -> "Sports & Fitness"
-                1 -> "Ngữ pháp A1 – Nền tảng"
-                else -> "CAM 21 Listening Vocab"
-            }
-            binding.tvSessionTitle.text = title
-
-            val time = when (pos % 3) {
-                0 -> "Hôm nay, 09:30"
-                1 -> "Hôm qua, 21:15"
-                else -> "2 ngày trước, 18:40"
-            }
-            binding.tvSessionTime.text = time
+            binding.tvSessionTitle.text = session.deckTitle ?: "Ôn tập tổng hợp"
+            val raw = session.studiedAt
+            binding.tvSessionTime.text = if (raw.isNullOrBlank()) "Chưa có thời gian"
+                else raw.replace('T', ' ').take(16) + " • " + when (session.studyMode) {
+                    "REVIEW" -> "Ôn tập"
+                    "LEARN" -> "Học"
+                    else -> "Nghe chép"
+                }
 
             val total = session.totalCards
             val correct = session.correctCards

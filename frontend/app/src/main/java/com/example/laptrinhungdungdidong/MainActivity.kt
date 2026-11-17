@@ -79,7 +79,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        updateDeckBadge()
     }
 
     override fun onResume() {
@@ -102,16 +101,13 @@ class MainActivity : AppCompatActivity() {
                     badge.number = count
                     badge.isVisible = true
                 } else {
-                    // Display badge 12 matching the UI design specification (Ảnh 3)
-                    badge.number = 12
-                    badge.isVisible = true
+                    badge.isVisible = false
                 }
             } catch (_: Exception) {
                 val badge = binding.bottomNavigation.getOrCreateBadge(R.id.nav_decks)
                 badge.backgroundColor = getColor(R.color.primary)
                 badge.badgeTextColor = getColor(R.color.white)
-                badge.number = 12
-                badge.isVisible = true
+                badge.isVisible = false
             }
         }
     }
